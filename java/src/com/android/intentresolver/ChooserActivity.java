@@ -249,12 +249,12 @@ public class ChooserActivity extends ResolverActivity implements
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        if (Settings.Global.getInt(getContentResolver(), Settings.Global.SECURE_FRP_MODE, 0) == 1) {
-            Log.e(TAG, "Sharing disabled due to active FRP lock.");
-            super.onCreate(savedInstanceState);
-            finish();
-            return;
-        }
+        if (Settings.Global.getInt(getContentResolver(), "secure_frp_mode", 0) == 1) {
+	    Log.e(TAG, "Sharing disabled due to active FRP lock.");
+	    super.onCreate(savedInstanceState);
+	    finish();
+	    return;
+	}
         final long intentReceivedTime = System.currentTimeMillis();
         mLatencyTracker.onActionStart(ACTION_LOAD_SHARE_SHEET);
 
