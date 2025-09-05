@@ -24,6 +24,7 @@ import static android.app.admin.DevicePolicyResources.Strings.Core.RESOLVER_CROS
 import static android.stats.devicepolicy.nano.DevicePolicyEnums.RESOLVER_EMPTY_STATE_NO_SHARING_TO_PERSONAL;
 import static android.stats.devicepolicy.nano.DevicePolicyEnums.RESOLVER_EMPTY_STATE_NO_SHARING_TO_WORK;
 
+import static com.android.intentresolver.util.IntentUtils.sanitizePayloadIntents;
 import static androidx.lifecycle.LifecycleKt.getCoroutineScope;
 
 import static com.android.internal.util.LatencyTracker.ACTION_LOAD_SHARE_SHEET;
@@ -521,9 +522,12 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
             boolean filterLastUsed,
             TargetDataLoader targetDataLoader) {
         int selectedProfile = findSelectedProfile();
+        List<Intent> crossProfileIntents = sanitizePayloadIntents(mIntents);
         ChooserGridAdapter personalAdapter = createChooserGridAdapter(
                 /* context */ this,
-                /* payloadIntents */ mIntents,
+                /* payloadIntents */ selectedProfile == PROFILE_PERSONAL
+                        ? mIntents
+                        : crossProfileIntents,
                 selectedProfile == PROFILE_PERSONAL ? initialIntents : null,
                 rList,
                 filterLastUsed,
@@ -531,7 +535,9 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                 targetDataLoader);
         ChooserGridAdapter workAdapter = createChooserGridAdapter(
                 /* context */ this,
-                /* payloadIntents */ mIntents,
+                /* payloadIntents */ selectedProfile == PROFILE_WORK
+                        ? mIntents
+                        : crossProfileIntents,
                 selectedProfile == PROFILE_WORK ? initialIntents : null,
                 rList,
                 filterLastUsed,
@@ -1324,21 +1330,21 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                 this::getFirstVisibleImgPreviewView,
                 new ChooserActionFactory.ActionActivityStarter() {
                     @Override
-                    public void safelyStartActivityAsPersonalProfileUser(TargetInfo targetInfo) {
+                    public void safelyStartActivityAsLaunchingUser(TargetInfo targetInfo) {
                         safelyStartActivityAsUser(
-                                targetInfo, getAnnotatedUserHandles().personalProfileUserHandle);
+                            targetInfo, UserHandle.of(UserHandle.myUserId()));
                         finish();
                     }
 
                     @Override
-                    public void safelyStartActivityAsPersonalProfileUserWithSharedElementTransition(
+                    public void safelyStartActivityAsLaunchingUserWithSharedElementTransition(
                             TargetInfo targetInfo, View sharedElement, String sharedElementName) {
                         ActivityOptions options = ActivityOptions.makeSceneTransitionAnimation(
                                 ChooserActivity.this, sharedElement, sharedElementName);
                         safelyStartActivityAsUser(
-                                targetInfo,
-                                getAnnotatedUserHandles().personalProfileUserHandle,
-                                options.toBundle());
+                            targetInfo,
+                            UserHandle.of(UserHandle.myUserId()),
+                            options.toBundle());
                         // Can't finish right away because the shared element transition may not
                         // be ready to start.
                         mFinishWhenStopped = true;
