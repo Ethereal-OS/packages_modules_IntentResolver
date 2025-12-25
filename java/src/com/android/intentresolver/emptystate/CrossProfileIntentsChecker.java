@@ -53,7 +53,7 @@ public class CrossProfileIntentsChecker {
             List<Intent> intents, @UserIdInt int source, @UserIdInt int target) {
         return intents.stream().anyMatch(intent ->
                 null != IntentForwarderActivity.canForward(intent, source, target,
-                        mPackageManager, mContentResolver));
+                        mPackageManager, intent.resolveTypeIfNeeded(mContentResolver)));
     }
 }
 
